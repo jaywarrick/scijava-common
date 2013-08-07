@@ -290,6 +290,7 @@ public class PluginInfo<PT extends SciJavaPlugin> extends AbstractUIDetails
 	@Override
 	public Class<? extends PT> loadClass() throws InstantiableException {
 		if (pluginClass == null) {
+long l1 = System.nanoTime();
 			final Class<?> c = ClassUtils.loadClass(className, classLoader);
 			if (c == null) {
 				throw new InstantiableException("Class not found: " + className);
@@ -297,6 +298,8 @@ public class PluginInfo<PT extends SciJavaPlugin> extends AbstractUIDetails
 			@SuppressWarnings("unchecked")
 			final Class<? extends PT> typedClass = (Class<? extends PT>) c;
 			pluginClass = typedClass;
+long l2 = System.nanoTime();
+//System.err.println("" + ((l2 - l1) / 1e6) + " ms to load " + className);
 		}
 
 		return pluginClass;

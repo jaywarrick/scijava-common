@@ -44,6 +44,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.scijava.util.Timing;
+
 /**
  * Data structure for managing sorted lists of registered objects.
  * <p>

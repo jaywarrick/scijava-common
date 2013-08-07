@@ -52,6 +52,7 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.PluginInfo;
 import org.scijava.service.event.ServicesLoadedEvent;
 import org.scijava.util.ClassUtils;
+import org.scijava.util.Timing;
 
 /**
  * Helper class for discovering and instantiating available services.
@@ -126,17 +127,25 @@ public class ServiceHelper extends AbstractContextual {
 	 *           required (i.e., not marked {@link Optional}) but cannot be
 	 *           filled.
 	 */
+private static Timing timing;
 	public void loadServices() {
+timing = new Timing();
 		for (final Class<? extends Service> serviceClass : serviceClasses) {
+System.err.println("about to load " + serviceClass);
 			loadService(serviceClass);
+//Timing.tick(timing, serviceClass);
 			if (serviceClass == LogService.class) {
 				final LogService logService = getContext().getService(LogService.class);
 				if (logService != null) log = logService;
+Timing.tick(timing, "log class");
 			}
 		}
+Timing.tick(timing);
 		final EventService eventService =
 			getContext().getService(EventService.class);
+Timing.tick(timing);
 		if (eventService != null) eventService.publishLater(new ServicesLoadedEvent());
+Timing.stop(timing);
 	}
 
 	/**
@@ -178,22 +187,31 @@ public class ServiceHelper extends AbstractContextual {
 	private <S extends Service> S loadService(final Class<S> c,
 		final boolean required)
 	{
+if (c.getName().endsWith(".UIService")) {
+	Timing.tick(timing, "pre pre load service " + c);
+	//new Exception("Hello").printStackTrace();
+}
 		// if a compatible service already exists, return it
 		final S service = getContext().getService(c);
+if (service != null) System.err.println("Already had " + c);
 		if (service != null) return service;
 
+Timing.tick(timing, "pre load service " + c);
 		// scan the class pool for a suitable match
 		for (final Class<? extends Service> serviceClass : classPoolList) {
 			if (c.isAssignableFrom(serviceClass)) {
 				// found a match; now instantiate it
+System.err.println("Will instantiate " + serviceClass);
 				@SuppressWarnings("unchecked")
 				final S result = (S) createExactService(serviceClass, required);
+System.err.println("Instantiated " + serviceClass);
 				if (required && result == null) {
 					throw new IllegalArgumentException();
 				}
 				return result;
 			}
 		}
+Timing.tick(timing, "post load service " + c);
 
 		if (required && c.isInterface()) {
 			throw new IllegalArgumentException("No compatible service: " +
@@ -221,6 +239,7 @@ public class ServiceHelper extends AbstractContextual {
 			long start = 0, end = 0;
 			boolean debug = log.isDebug();
 			if (debug) start = System.currentTimeMillis();
+Timing.tick(timing, "pre create exact " + c);
 			final S service = createServiceRecursively(c);
 			getContext().getServiceIndex().add(service);
 			if (debug) end = System.currentTimeMillis();
@@ -254,7 +273,9 @@ public class ServiceHelper extends AbstractContextual {
 		throws InstantiationException, IllegalAccessException
 	{
 		final S service = c.newInstance();
+Timing.tick(timing, "intantiated " + c);
 		service.setContext(getContext());
+Timing.tick(timing, "set context " + c);
 
 		// propagate priority if known
 		final Double priority = classPoolMap.get(c);
@@ -263,6 +284,7 @@ public class ServiceHelper extends AbstractContextual {
 		// populate service parameters
 		final List<Field> fields =
 			ClassUtils.getAnnotatedFields(c, Parameter.class);
+Timing.tick(timing, "pre fields " + c);
 		for (final Field f : fields) {
 			f.setAccessible(true); // expose private fields
 
@@ -281,15 +303,27 @@ public class ServiceHelper extends AbstractContextual {
 				(Class<? extends Service>) type;
 			Service s = getContext().getService(serviceType);
 			if (s == null) {
+				final String message = "Loading " + serviceType + " because of " + c;
+				if (log == null) System.err.println(message);
+				else log.debug(message);
 				// recursively obtain needed service
 				final boolean required = f.getAnnotation(Parameter.class).required();
+System.err.println("about to load " + serviceType);
 				s = loadService(serviceType, required);
+System.err.println("loaded " + serviceType);
 			}
 			ClassUtils.setValue(f, service, s);
 		}
 
+System.err.println("about to initialize " + c);
+Timing.tick(timing, "pre initialize " + c);
 		service.initialize();
+Timing.tick(timing, "post initialize " + c);
 		service.registerEventHandlers();
+Timing.tick(timing, "post event handler registration " + c);
+if (c.getName().endsWith("History")) {
+	System.err.println(1);
+}
 		return service;
 	}
 
@@ -302,17 +336,21 @@ public class ServiceHelper extends AbstractContextual {
 		final List<PluginInfo<Service>> services =
 			getContext().getPluginIndex().getPlugins(Service.class);
 
+Timing timing = new Timing();
 		for (final PluginInfo<Service> info : services) {
+long l1 = System.nanoTime();
 			try {
 				final Class<? extends Service> c = info.loadClass();
 				final double priority = info.getPriority();
 				serviceMap.put(c, priority);
 				serviceList.add(c);
+timing.addTiming(System.nanoTime() - l1, c);
 			}
 			catch (final Throwable e) {
 				log.error("Invalid service: " + info, e);
 			}
 		}
+timing.report(null);
 	}
 
 	/** Returns true iff the given class is {@link Optional}. */

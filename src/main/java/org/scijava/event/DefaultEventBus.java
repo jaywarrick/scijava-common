@@ -45,6 +45,7 @@ import org.bushe.swing.event.ThreadSafeEventService;
 import org.scijava.log.LogService;
 import org.scijava.service.Service;
 import org.scijava.thread.ThreadService;
+import org.scijava.util.Timing;
 
 /**
  * An {@link org.bushe.swing.event.EventService} implementation for SciJava.
@@ -83,8 +84,14 @@ public class DefaultEventBus extends ThreadSafeEventService {
 		if (event == null) {
 			throw new IllegalArgumentException("Cannot publish null event.");
 		}
-		publishNow(event, null, null, getSubscribers(event.getClass()),
-			getVetoSubscribers(event.getClass()), null);
+final Timing timing = Timing.start(event.getClass().getName().endsWith("ModulesAddedEvent"));
+		final List<?> subscribers = getSubscribers(event.getClass());
+Timing.tick(timing);
+		final List<?> veto = getVetoSubscribers(event.getClass());
+Timing.tick(timing);
+		publishNow(event, null, null, subscribers,
+			veto, null);
+Timing.stop(timing);
 	}
 
 	public void publishNow(final Type genericType, final Object event) {
@@ -103,11 +110,18 @@ public class DefaultEventBus extends ThreadSafeEventService {
 	}
 
 	public void publishLater(final Object event) {
+final Timing timing = Timing.start(event.getClass().getName().endsWith("ModulesAddedEvent"));
 		if (event == null) {
 			throw new IllegalArgumentException("Cannot publish null event.");
 		}
-		publishLater(event, null, null, getSubscribers(event.getClass()),
-			getVetoSubscribers(event.getClass()), null);
+Timing.tick(timing);
+		final List<?> subscribers = getSubscribers(event.getClass());
+Timing.tick(timing);
+		final List<?> vetoSubscribers = getVetoSubscribers(event.getClass());
+Timing.tick(timing);
+		publishLater(event, null, null, subscribers,
+			vetoSubscribers, null);
+Timing.stop(timing);
 	}
 
 	public void publishLater(final Type genericType, final Object event) {
@@ -191,24 +205,36 @@ public class DefaultEventBus extends ThreadSafeEventService {
 		final StackTraceElement[] callingStack)
 	{
 		if (subscribers == null || subscribers.isEmpty()) return;
+		final Timing timing = Timing.start(event.getClass().getName().endsWith("ModulesAddedEvent"));
+if (event.getClass().getName().endsWith("ModulesAddedEvent")) {
+	System.err.println(1);
+}
 		try {
-			threadService.invoke(new Runnable() {
+			final Runnable runnable = new Runnable() {
 
 				@Override
 				public void run() {
 					log.debug("publish(" + event + "," + topic + "," + eventObj +
 						"), called from non-EDT Thread:" + Arrays.toString(callingStack));
+if (event.getClass().getName().endsWith("ModulesAddedEvent")) {
+	System.err.println(1);
+}
 					DefaultEventBus.super.publish(event, topic, eventObj, subscribers,
 						vetoSubscribers, callingStack);
 				}
-			});
+			};
+Timing.tick(timing);
+			threadService.invoke(runnable);
 		}
 		catch (final InterruptedException exc) {
+Timing.tick(timing);
 			log.error(exc);
 		}
 		catch (final InvocationTargetException exc) {
+Timing.tick(timing);
 			log.error(exc);
 		}
+Timing.stop(timing);
 	}
 
 	private void publishLater(final Object event, final String topic,
@@ -218,7 +244,8 @@ public class DefaultEventBus extends ThreadSafeEventService {
 		final StackTraceElement[] callingStack)
 	{
 		if (subscribers == null || subscribers.isEmpty()) return;
-		threadService.run(new Runnable() {
+final Timing timing = Timing.start(event.getClass().getName().endsWith("ModulesAddedEvent"));
+		final Runnable runnable = new Runnable() {
 
 			@Override
 			public void run() {
@@ -227,7 +254,10 @@ public class DefaultEventBus extends ThreadSafeEventService {
 				DefaultEventBus.super.publish(event, topic, eventObj, subscribers,
 					vetoSubscribers, callingStack);
 			}
-		});
+		};
+Timing.tick(timing);
+		threadService.run(runnable);
+Timing.stop(timing);
 	}
 
 }
