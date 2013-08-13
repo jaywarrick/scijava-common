@@ -38,6 +38,8 @@ package org.scijava.plugin;
 import java.util.HashMap;
 import java.util.List;
 
+import org.scijava.util.Timing;
+
 import net.java.sezpoz.Index;
 import net.java.sezpoz.IndexItem;
 
@@ -71,24 +73,34 @@ public class DefaultPluginFinder implements PluginFinder {
 	public HashMap<String, Throwable> findPlugins(
 		final List<PluginInfo<?>> plugins)
 	{
+final Timing timing = Timing.start(true);
 		final HashMap<String, Throwable> exceptions =
 			new HashMap<String, Throwable>();
+Timing.tick(timing);
 
 		// load the SezPoz index
 		final ClassLoader classLoader = getClassLoader();
+Timing.tick(timing);
 		final Index<Plugin, SciJavaPlugin> sezPozIndex =
 			Index.load(Plugin.class, SciJavaPlugin.class, classLoader);
+Timing.tick(timing);
 
 		// create a PluginInfo object for each item in the index
 		for (final IndexItem<Plugin, SciJavaPlugin> item : sezPozIndex) {
 			try {
+if (item.className().contains("DefaultConsole")) {
+	System.err.println(1);
+}
 				final PluginInfo<?> info = createInfo(item, classLoader);
+Timing.tick(timing, "create " + item.className());
 				plugins.add(info);
+Timing.tick(timing, "add " + item.className());
 			}
 			catch (final Throwable t) {
 				exceptions.put(item.className(), t);
 			}
 		}
+Timing.stop(timing);
 
 		return exceptions;
 	}
