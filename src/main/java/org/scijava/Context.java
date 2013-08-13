@@ -51,6 +51,7 @@ import org.scijava.service.ServiceHelper;
 import org.scijava.service.ServiceIndex;
 import org.scijava.util.CheckSezpoz;
 import org.scijava.util.ClassUtils;
+import org.scijava.util.Timing;
 
 /**
  * Top-level SciJava application context, which initializes and maintains a list
@@ -142,6 +143,7 @@ public class Context implements Disposable {
 	public Context(final Collection<Class<? extends Service>> serviceClasses,
 		final PluginIndex pluginIndex)
 	{
+final Timing timing = Timing.start(true);
 		if (sezpozNeedsToRun) {
 			// First context! Check that annotations were generated properly.
 			try {
@@ -150,21 +152,27 @@ public class Context implements Disposable {
 					// apt-generated annotations.
 					System.err.println("SezPoz generated annotations."); // no log service
 				}
+Timing.tick(timing);
 			}
 			catch (final IOException e) {
 				e.printStackTrace();
+Timing.tick(timing);
 			}
 			sezpozNeedsToRun = false;
 		}
 
 		serviceIndex = new ServiceIndex();
+Timing.tick(timing);
 
 		this.pluginIndex = pluginIndex;
 		pluginIndex.discover();
+Timing.tick(timing);
 
 		final ServiceHelper serviceHelper =
 			new ServiceHelper(this, serviceClasses);
+Timing.tick(timing);
 		serviceHelper.loadServices();
+Timing.stop(timing);
 	}
 
 	// -- Context methods --
