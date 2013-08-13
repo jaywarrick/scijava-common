@@ -49,7 +49,6 @@ import org.scijava.plugin.event.PluginsRemovedEvent;
 import org.scijava.service.AbstractService;
 import org.scijava.service.Service;
 import org.scijava.util.ListUtils;
-import org.scijava.util.Timing;
 
 /**
  * Default service for keeping track of available plugins.
@@ -225,14 +224,11 @@ public class DefaultPluginService extends AbstractService implements
 	public <PT extends SciJavaPlugin> List<PT> createInstances(
 		final List<PluginInfo<PT>> infos)
 	{
-final Timing timing = Timing.start(!true);
 		final ArrayList<PT> list = new ArrayList<PT>();
 		for (final PluginInfo<? extends PT> info : infos) {
 			final PT p = createInstance(info);
-Timing.tick(timing);
 			if (p != null) list.add(p);
 		}
-Timing.stop(timing);
 		return list;
 	}
 

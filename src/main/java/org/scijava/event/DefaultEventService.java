@@ -52,7 +52,6 @@ import org.scijava.plugin.Plugin;
 import org.scijava.service.AbstractService;
 import org.scijava.service.Service;
 import org.scijava.thread.ThreadService;
-import org.scijava.util.Timing;
 
 /**
  * Default service for publishing and subscribing to SciJava events.
@@ -92,20 +91,14 @@ public class DefaultEventService extends AbstractService implements
 
 	@Override
 	public <E extends SciJavaEvent> void publish(final E e) {
-final Timing timing = Timing.start(e.getClass().getName().endsWith("ModulesAddedEvent"));
 		e.setContext(getContext());
-Timing.tick(timing);
 		eventBus.publishNow(e);
-Timing.stop(timing);
 	}
 
 	@Override
 	public <E extends SciJavaEvent> void publishLater(final E e) {
-final Timing timing = Timing.start(e.getClass().getName().endsWith("ModulesAddedEvent"));
 		e.setContext(getContext());
-Timing.tick(timing);
 		eventBus.publishLater(e);
-Timing.stop(timing);
 	}
 
 	@Override
