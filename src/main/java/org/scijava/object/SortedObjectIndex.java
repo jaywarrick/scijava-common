@@ -39,7 +39,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -62,8 +61,11 @@ public class SortedObjectIndex<E extends Comparable<? super E>> extends
 	ObjectIndex<E>
 {
 
+	private List<E> ALL_LIST;
+
 	public SortedObjectIndex(final Class<E> baseClass) {
 		super(baseClass);
+		ALL_LIST = retrieveList(All.class);
 	}
 
 	// -- Collection methods --
@@ -161,7 +163,10 @@ public class SortedObjectIndex<E extends Comparable<? super E>> extends
 			// adding multiple values; append to end of list, and sort afterward
 			return super.addToList(obj, list, batch);
 		}
-
+		if (list == ALL_LIST) {
+			list.add(obj);
+			return true;
+		}
 		// search for the correct location to insert the object
 		final int result = Collections.binarySearch(list, obj);
 		// NB: The objects' natural ordering may not be consistent with equals.
@@ -180,6 +185,8 @@ public class SortedObjectIndex<E extends Comparable<? super E>> extends
 
 	private void sort() {
 		for (final List<E> list : hoard.values()) {
+			// never sort the overall list since it tracks insertion order
+			if (list == ALL_LIST) continue;
 			Collections.sort(list);
 		}
 	}
