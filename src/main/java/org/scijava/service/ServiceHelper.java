@@ -207,6 +207,7 @@ public class ServiceHelper extends AbstractContextual {
 
 		// scan the class pool for a suitable match
 		for (final Class<? extends Service> serviceClass : classPoolList) {
+System.err.println("service class " + serviceClass.getName());
 			if (c.isAssignableFrom(serviceClass)) {
 				// found a match; now instantiate it
 				@SuppressWarnings("unchecked")
@@ -325,6 +326,7 @@ public class ServiceHelper extends AbstractContextual {
 		final List<PluginInfo<Service>> services =
 			getContext().getPluginIndex().getPlugins(Service.class);
 
+System.err.println("services: " + services.size());
 		for (final PluginInfo<Service> info : services) {
 			try {
 				final Class<? extends Service> c = info.loadClass();

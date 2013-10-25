@@ -78,14 +78,18 @@ public class DefaultPluginFinder implements PluginFinder {
 		final ClassLoader classLoader = getClassLoader();
 		final Index<Plugin, SciJavaPlugin> sezPozIndex =
 			Index.load(Plugin.class, SciJavaPlugin.class, classLoader);
+System.err.println("index: " + sezPozIndex);
 
 		// create a PluginInfo object for each item in the index
 		for (final IndexItem<Plugin, SciJavaPlugin> item : sezPozIndex) {
+System.err.println("item: " + item);
 			try {
+System.err.println("item: " + item.annotation());
 				final PluginInfo<?> info = createInfo(item, classLoader);
 				plugins.add(info);
 			}
 			catch (final Throwable t) {
+t.printStackTrace();
 				exceptions.put(item.className(), t);
 			}
 		}
